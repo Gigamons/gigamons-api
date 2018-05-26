@@ -7,10 +7,10 @@ import (
 
 	"github.com/Gigamons/common/consts"
 	"github.com/Gigamons/common/helpers"
-	"github.com/gigamons_api/Router"
-	"github.com/gigamons_api/constants"
-	"github.com/gigamons_api/glob"
-	"github.com/gigamons_api/server"
+	"github.com/Gigamons/gigamons_api/Router"
+	"github.com/Gigamons/gigamons_api/constants"
+	"github.com/Gigamons/gigamons_api/glob"
+	"github.com/Gigamons/gigamons_api/server"
 )
 
 var c constants.Config

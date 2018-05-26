@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/gigamons_api/constants"
+	"github.com/Gigamons/gigamons_api/constants"
 )
 
 func ServerSideError(w http.ResponseWriter, r *http.Request) {

@@ -3,7 +3,7 @@ package Router
 import (
 	"net/http"
 
-	"github.com/gigamons_api/server"
+	"github.com/Gigamons/gigamons_api/server"
 )
 
 func Route() {
