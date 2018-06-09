@@ -1,10 +1,13 @@
 package Router
 
 import (
-	"encoding/json"
 	"net/http"
 
+	// FirstParty
 	"github.com/Gigamons/gigamons_api/constants"
+
+	// ThirdParty
+	"github.com/pquerna/ffjson/ffjson"
 )
 
 func ServerSideError(w http.ResponseWriter, r *http.Request) {
@@ -17,7 +20,7 @@ func Exception(ex string, w http.ResponseWriter, r *http.Request) {
 }
 
 func JsonException(status int, message string, w http.ResponseWriter, r *http.Request) {
-	res, err := json.Marshal(constants.Response{Response: status, Message: message})
+	res, err := ffjson.Marshal(constants.Response{Response: status, Message: message})
 	if err != nil {
 		ServerSideError(w, r)
 		return

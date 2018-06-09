@@ -13,6 +13,33 @@ import (
 	"github.com/gorilla/mux"
 )
 
+type Silenced struct {
+	IsSilenced bool
+	Until      time.Time
+	Because    string
+}
+
+type Banned struct {
+	IsBanned bool
+	Until    time.Time
+	Because  string
+}
+
+type UserName struct {
+	Normal string
+	Safe   string
+}
+
+type User struct {
+	ID          int32
+	Privileges  int32
+	Country     int16
+	UserName    UserName
+	Banned      Banned
+	Silenced    Silenced
+	Leaderboard consts.Leaderboard
+}
+
 // *Biep* *boop*
 func UserRouter(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
@@ -44,37 +71,26 @@ func UserRouter(w http.ResponseWriter, r *http.Request) {
 		JsonException(404, "User not found!", w, r)
 		return
 	}
-	b, err := json.MarshalIndent(struct {
-		ID         int32
-		Privileges int32
-		Country    int16
-		UserName   struct {
-			Normal string
-			Safe   string
-		}
-		Banned struct {
-			IsBanned bool
-			Until    time.Time
-			Because  string
-		}
-		Silenced struct {
-			IsSilenced bool
-			Until      time.Time
-			Because    string
-		}
-		Leaderboard consts.Leaderboard
-	}{ID: u.ID, UserName: struct {
-		Normal string
-		Safe   string
-	}{Normal: u.UserName, Safe: u.UserNameSafe}, Privileges: u.Privileges, Banned: struct {
-		IsBanned bool
-		Until    time.Time
-		Because  string
-	}{IsBanned: u.Status.Banned, Until: u.Status.BannedUntil, Because: u.Status.BannedReason}, Silenced: struct {
-		IsSilenced bool
-		Until      time.Time
-		Because    string
-	}{IsSilenced: u.Status.Silenced, Until: u.Status.SilencedUntil, Because: u.Status.SilencedReason}, Country: u.Status.Country, Leaderboard: usertools.GetLeaderboard(*u, int8(0))}, "", " ")
+	b, err := json.MarshalIndent(User{
+		ID: u.ID,
+		UserName: UserName{
+			Normal: u.UserName,
+			Safe:   u.UserNameSafe,
+		},
+		Privileges: u.Privileges,
+		Banned: Banned{
+			IsBanned: u.Status.Banned,
+			Until:    u.Status.BannedUntil,
+			Because:  u.Status.BannedReason,
+		},
+		Silenced: Silenced{
+			IsSilenced: u.Status.Silenced,
+			Until:      u.Status.SilencedUntil,
+			Because:    u.Status.SilencedReason,
+		},
+		Country:     u.Status.Country,
+		Leaderboard: usertools.GetLeaderboard(*u, int8(0)),
+	}, "", " ")
 	if err != nil {
 		JsonException(500, "Server side Error!", w, r)
 		return
