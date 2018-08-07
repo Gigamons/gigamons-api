@@ -1,11 +1,12 @@
-package Router
+package router
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/pquerna/ffjson/ffjson"
 
 	"github.com/Gigamons/common/consts"
 
@@ -31,22 +32,33 @@ type UserName struct {
 }
 
 type User struct {
-	ID          int32
-	Privileges  int32
-	Country     int16
-	UserName    UserName
-	Banned      Banned
-	Silenced    Silenced
-	Leaderboard consts.Leaderboard
+	ID           int32
+	Privileges   int32
+	Achievements int32
+	Country      string
+	UserName     UserName
+	Banned       Banned
+	Silenced     Silenced
+	Leaderboard  consts.Leaderboard
 }
 
 // *Biep* *boop*
 func UserRouter(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	requestedUser := fmt.Sprintf("%s", vars["user"])
+	p := r.URL.Query().Get("p")
+	pmode := 0
+	if p != "" {
+		var err error
+		pmode, err = strconv.Atoi(p)
+		if err != nil {
+			JSONAnswer(500, "Serverside Exception!", w, r)
+			return
+		}
+	}
 
 	if requestedUser == "" {
-		JsonException(404, "No Username/UserID applied! please use /api/user/(userid or username)", w, r)
+		JSONAnswer(404, "No Username/UserID applied! please use /api/v1/user/(userid or username)", w, r)
 		return
 	}
 
@@ -68,16 +80,17 @@ func UserRouter(w http.ResponseWriter, r *http.Request) {
 	u.BCryptPassword = ""
 
 	if u.ID == 0 {
-		JsonException(404, "User not found!", w, r)
+		JSONAnswer(404, "User not found!", w, r)
 		return
 	}
-	b, err := json.MarshalIndent(User{
+	b, err := ffjson.Marshal(User{
 		ID: u.ID,
 		UserName: UserName{
 			Normal: u.UserName,
 			Safe:   u.UserNameSafe,
 		},
-		Privileges: u.Privileges,
+		Privileges:   u.Privileges,
+		Achievements: u.Achievements,
 		Banned: Banned{
 			IsBanned: u.Status.Banned,
 			Until:    u.Status.BannedUntil,
@@ -88,13 +101,12 @@ func UserRouter(w http.ResponseWriter, r *http.Request) {
 			Until:      u.Status.SilencedUntil,
 			Because:    u.Status.SilencedReason,
 		},
-		Country:     u.Status.Country,
-		Leaderboard: usertools.GetLeaderboard(*u, int8(0)),
-	}, "", " ")
+		Country:     consts.ToCountryCode(uint8(u.Status.Country)),
+		Leaderboard: *usertools.GetLeaderboard(u, int8(pmode)),
+	})
 	if err != nil {
-		JsonException(500, "Server side Error!", w, r)
+		JSONAnswer(500, "Server side Error!", w, r)
 		return
 	}
-	w.WriteHeader(200)
-	w.Write(b)
+	JSONAnswer(200, b, w, r)
 }
